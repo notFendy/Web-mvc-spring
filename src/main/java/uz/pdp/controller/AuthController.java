@@ -1,50 +1,62 @@
 package uz.pdp.controller;
 
 
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.stereotype.Controller;
+import org.springframework.ui.Model;
+import org.springframework.validation.BindingResult;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.servlet.ModelAndView;
+import uz.pdp.dao.UserDao;
+import uz.pdp.dto.UserLoginDto;
 import uz.pdp.dto.UserSignUpDto;
 import uz.pdp.model.User;
 
-import java.util.ArrayList;
-import java.util.List;
 
 
 @Controller
 @RequestMapping("/auth")
 @RequiredArgsConstructor
 public class AuthController {
-    private static final List<User> USERS = new ArrayList<>();
 
+    private final UserDao userDao;
     @GetMapping
-    public String auth(){
+    public String auth(Model model) {
+        model.addAttribute("dto", new UserSignUpDto());
         return "auth";
     }
+
     @PostMapping("/signup")
     public ModelAndView SignUp(
-            @ModelAttribute UserSignUpDto signupDto,
-            ModelAndView modelAndView
+            @Valid @ModelAttribute("dto") UserSignUpDto signupDto,
+            ModelAndView modelAndView,
+            BindingResult bindingResult
     ){
-        if (isEmailExists(signupDto.email())){
+
+
+        if (isEmailExists(signupDto.getEmail())){
             modelAndView.setViewName("error");
             return modelAndView;
         }
 
+        if (bindingResult.hasErrors()){
+            modelAndView.setViewName("auth");
+            return modelAndView;
+        }
+
         final var user = User.builder()
-                .username(signupDto.username())
-                .email(signupDto.email())
-                .password(signupDto.password())
-                .gender(signupDto.gender())
+                .username(signupDto.getUsername())
+                .email(signupDto.getEmail())
+                .password(signupDto.getPassword())
+                .gender(signupDto.getGender())
                 .build();
 
-        USERS.add(user);
-
-        System.out.println(USERS);
+        userDao.save(user);
 
         modelAndView.addObject("user", user);
         modelAndView.setViewName("index");
@@ -52,16 +64,14 @@ public class AuthController {
     }
 
     @PostMapping ("/login")
-    public ModelAndView login(@ModelAttribute UserSignUpDto userSignUpDto,
+    public ModelAndView login(@ModelAttribute UserLoginDto userLoginDto,
                               ModelAndView modelAndView
     )  {
 
-        User user = getUserByEmailAndPassword(userSignUpDto.email(), userSignUpDto.password());
+        User user = getUserByEmailAndPassword(userLoginDto.getEmail(), userLoginDto.getPassword());
 
         if (user != null) {
-
             modelAndView.setViewName("project");
-
         } else {
             modelAndView.setViewName("login-error");
         }
@@ -70,21 +80,24 @@ public class AuthController {
     }
 
     private User getUserByEmailAndPassword(String email, String password) {
-        for (User user : USERS) {
-            if (user.getEmail().equals(email) && user.getPassword().equals(password)) {
+        try {
+            User user = userDao.findByEmail(email);
+            if (user != null && user.getPassword().equals(password)) {
                 return user;
+            } else {
+                return null;
             }
+        } catch (EmptyResultDataAccessException e) {
+            return null;
         }
-        return null;
     }
 
     private boolean isEmailExists(String email) {
-        for (User user : USERS) {
-            if (user.getEmail().equals(email)) {
-                return true;
-            }
+        try {
+            User existingUser = userDao.findByEmail(email);
+            return existingUser != null;
+        } catch (EmptyResultDataAccessException e) {
+            return false;
         }
-        return false;
     }
-
 }

@@ -2,27 +2,18 @@ package uz.pdp.model;
 
 import lombok.*;
 
+import java.util.Date;
+
 @Getter
 @Setter
 @Builder
-@AllArgsConstructor
-@NoArgsConstructor
-
+//@AllArgsConstructor
+//@NoArgsConstructor
 public class User {
     private Long id;
     private String username;
     private String email;
     private String password;
     private String gender;
-
-    @Override
-    public String toString() {
-        return "User{" +
-                "id=" + id +
-                ", username='" + username + '\'' +
-                ", email='" + email + '\'' +
-                ", password='" + password + '\'' +
-                ", gender='" + gender + '\'' +
-                '}';
-    }
+    private Date createdDate;
 }

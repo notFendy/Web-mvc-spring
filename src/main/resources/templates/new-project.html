@@ -1,23 +1,49 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
 <head>
     <meta charset="UTF-8">
     <title>Project</title>
 </head>
 <body>
-<form action="/project/newproject" method="get">
-    <label>
-        Enter new project name : <input type="text" name="project_name">
-    </label>
+<div>
+    <form action="/project/upload" method="post" enctype="multipart/form-data">
+        <label>
+            Enter new project name : <input type="text" name="project_name">
+        </label>
+        <br>
+        <br>
+        <label>
+            Add project Developer : <input type="email" name="project_developer">
+        </label>
+        <br>
+        <br>
+        <label>
+            File name : <input type="text" name="filename">
+        </label>
+        <br>
+        <br>
+        <label>
+            File :  <input type="file" name="uploadedFile">
+        </label>
+        <br>
+        <br>
+        <button type="submit">Submit</button>
+
+    </form>
     <br>
     <br>
-    <label>
-        Add project Developer : <input type="email">
-    </label>
     <br>
-    <br>
-    <button type="submit">Create</button>
-</form>
+    <div th:if="${file}">
+        <ul th:object="${file}">
+            <li><h6 th:text="*{projectName}"></h6> </li>
+            <li><h6 th:text="*{projectDeveloper}"></h6> </li>
+            <li><h6 th:text="*{originalName}"></h6> </li>
+        </ul>
+    </div>
+
+</div>
+
+
 
 </body>
 </html>
